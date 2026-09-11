@@ -300,7 +300,7 @@
           <h2>Trips per day, by week</h2>
           <select class="month-select" id="calMonthSelect"></select>
         </div>
-        <div class="card-note">Darker cells = more trips that day. Hover a cell for the exact count.</div>
+        <div class="card-note">Cell shows trip count that day; darker = more. Hover a cell for the exact date.</div>
         <div id="calendarGrid"><div class="skel skel-block"></div></div>
       </div>
 
@@ -639,7 +639,7 @@
       weeks.forEach(function(w){
         var d = w[ri];
         if(!d){ html += '<td class="cell"></td>'; return; }
-        html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'">'+d.day+'</td>';
+        html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'">'+(d.count||'')+'</td>';
       });
       html += '<td class="total">'+weekdayTotals[ri]+'</td></tr>';
     });

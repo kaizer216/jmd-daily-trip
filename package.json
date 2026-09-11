@@ -1,0 +1,9 @@
+{
+  "name": "trip-ledger",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trip Ledger dashboard - live-fetches TRIPS sheet data via a Vercel serverless function.",
+  "dependencies": {
+    "googleapis": "^140.0.1"
+  }
+}

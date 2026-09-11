@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JMD Daily Trip</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --page:#eef0f0; --surface:#ffffff; --surface-2:#f4f6f6; --surface-3:#eceeee;
+    --ink:#14181b; --ink-2:#52585d; --ink-3:#868c90;
+    --border:rgba(20,24,27,0.12); --border-2:rgba(20,24,27,0.07);
+    --accent:#c96a12; --accent-soft:#f3e3d1; --accent-ink:#5c3608;
+    --brand:#2a4d6e; --brand-soft:#e4ebf1;
+    --series-blue:#2a78d6; --series-orange:#eb6834; --series-aqua:#1baf7a;
+    --status-good:#0ca30c; --status-warning:#a3670a; --status-serious:#c1502b; --status-critical:#d03b3b;
+    --seq-100:#cde2fb; --seq-250:#86b6ef; --seq-400:#3987e5; --seq-500:#256abf; --seq-650:#104281;
+    --shadow: 0 1px 2px rgba(20,24,27,0.06), 0 8px 20px -12px rgba(20,24,27,0.18);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:#121517; --surface:#1a1e21; --surface-2:#20252a; --surface-3:#262c31;
+      --ink:#f1f2f0; --ink-2:#b9bec2; --ink-3:#80868b;
+      --border:rgba(255,255,255,0.12); --border-2:rgba(255,255,255,0.07);
+      --accent:#e79a49; --accent-soft:#3a2c1a; --accent-ink:#f4d9b8;
+      --brand:#8fb2d4; --brand-soft:#22303e;
+      --series-blue:#3987e5; --series-orange:#d95926; --series-aqua:#199e70;
+      --status-good:#0ca30c; --status-warning:#fab219; --status-serious:#ec835a; --status-critical:#e66767;
+      --seq-100:#18314f; --seq-250:#1c5cab; --seq-400:#3987e5; --seq-500:#6da7ec; --seq-650:#b7d3f6;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px -14px rgba(0,0,0,0.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#121517; --surface:#1a1e21; --surface-2:#20252a; --surface-3:#262c31;
+    --ink:#f1f2f0; --ink-2:#b9bec2; --ink-3:#80868b;
+    --border:rgba(255,255,255,0.12); --border-2:rgba(255,255,255,0.07);
+    --accent:#e79a49; --accent-soft:#3a2c1a; --accent-ink:#f4d9b8;
+    --brand:#8fb2d4; --brand-soft:#22303e;
+    --series-blue:#3987e5; --series-orange:#d95926; --series-aqua:#199e70;
+    --status-good:#0ca30c; --status-warning:#fab219; --status-serious:#ec835a; --status-critical:#e66767;
+    --seq-100:#18314f; --seq-250:#1c5cab; --seq-400:#3987e5; --seq-500:#6da7ec; --seq-650:#b7d3f6;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 24px -14px rgba(0,0,0,0.6);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;}
+  body{
+    background:var(--page); color:var(--ink);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    padding-inline:20px; padding-block:28px 60px;
+    font-size:14.5px; line-height:1.45;
+  }
+  .num{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  h1,h2,h3{ font-family:"Barlow Condensed", system-ui, sans-serif; font-weight:700; margin:0; text-wrap:balance; }
+  .eyebrow{
+    font-family:"Barlow Condensed", sans-serif; font-weight:600; font-size:12.5px;
+    letter-spacing:0.09em; text-transform:uppercase; color:var(--ink-3);
+  }
+  a{ color:var(--brand); }
+
+  .wrap{ max-width:1240px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
+
+  /* ---------- header ---------- */
+  .topbar{
+    display:flex; flex-wrap:wrap; align-items:flex-end; justify-content:space-between; gap:16px;
+    padding-bottom:16px; border-bottom:2px solid var(--ink);
+  }
+  .topbar h1{ font-size:clamp(30px,5vw,42px); letter-spacing:0.01em; }
+  .topbar .sub{ color:var(--ink-2); margin-top:4px; font-size:14px; }
+  .chipline{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; padding:5px 11px; border-radius:100px;
+    border:1px solid var(--border); background:var(--surface); font-size:12.5px; color:var(--ink-2);
+    white-space:nowrap;
+  }
+  .chip b{ color:var(--ink); font-weight:600; }
+  .chip .dot{ width:6px; height:6px; border-radius:50%; background:var(--brand); flex:none; }
+  .chip .dot.live{ background:var(--status-good); }
+
+  /* ---------- kpis ---------- */
+  .kpis{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  .kpi{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:16px 16px 14px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:6px;
+    min-width:0;
+  }
+  .kpi .lbl{ font-family:"Barlow Condensed"; font-weight:600; font-size:13px; letter-spacing:0.05em; text-transform:uppercase; color:var(--ink-3); }
+  .kpi .val{ font-size:28px; font-weight:500; letter-spacing:-0.01em; }
+  .kpi .sub{ font-size:12.5px; color:var(--ink-2); }
+  .kpi .sub.flag{ display:flex; align-items:center; gap:6px; font-weight:500; }
+  .flagdot{ width:8px; height:8px; border-radius:2px; flex:none; }
+  .flagdot.crit{ background:var(--status-critical); }
+  .flagdot.warn{ background:var(--status-warning); }
+  .flagdot.good{ background:var(--status-good); }
+
+  /* ---------- layout grid ---------- */
+  .grid{ display:grid; grid-template-columns:1.62fr 1fr; gap:16px; align-items:start; }
+  .col{ display:flex; flex-direction:column; gap:16px; min-width:0; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:18px 18px 16px; box-shadow:var(--shadow); min-width:0;
+  }
+  .card-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px; flex-wrap:wrap; }
+  .card-head h2{ font-size:19px; }
+  .card-head .period{ font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono"; white-space:nowrap; }
+  .card-note{ font-size:12.5px; color:var(--ink-2); margin-top:2px; margin-bottom:10px; }
+
+  /* ---------- charts generic ---------- */
+  .chart-svg{ width:100%; height:auto; display:block; overflow:visible; }
+  .axis-line{ stroke:var(--border); stroke-width:1; }
+  .grid-line{ stroke:var(--border-2); stroke-width:1; }
+  .tick-label{ fill:var(--ink-3); font-family:"IBM Plex Mono",monospace; font-size:11px; }
+  .value-label{ fill:var(--ink); font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:500; }
+  .cat-label{ fill:var(--ink-2); font-family:"IBM Plex Sans",sans-serif; font-size:12px; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; margin:10px 2px 2px; }
+  .legend-item{ display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--ink-2); }
+  .legend-swatch{ width:10px; height:10px; border-radius:2px; flex:none; }
+
+  .tooltip{
+    position:fixed; pointer-events:none; z-index:50; background:var(--ink); color:var(--page);
+    padding:7px 10px; border-radius:7px; font-size:12.5px; line-height:1.4; box-shadow:var(--shadow);
+    opacity:0; transform:translate(-50%,-100%); transition:opacity .08s ease; white-space:nowrap;
+  }
+  :root:not([data-theme="light"]) .tooltip{ background:#f1f2f0; color:#14171a; }
+  :root[data-theme="dark"] .tooltip{ background:#f1f2f0; color:#14171a; }
+  .tooltip b{ font-family:"IBM Plex Mono"; }
+
+  /* ---------- heatmap table ---------- */
+  .heat-scroll{ overflow-x:auto; }
+  table.heat{ border-collapse:collapse; width:100%; min-width:640px; font-size:12.5px; }
+  table.heat th, table.heat td{ padding:6px 7px; text-align:center; white-space:nowrap; }
+  table.heat thead th{
+    font-family:"Barlow Condensed"; font-weight:600; letter-spacing:0.04em; text-transform:uppercase;
+    color:var(--ink-3); font-size:11px; border-bottom:1px solid var(--border); text-align:center;
+  }
+  table.heat thead th:first-child{ text-align:left; }
+  table.heat td:first-child, table.heat th:first-child{
+    position:sticky; left:0; background:var(--surface); text-align:left; font-family:"IBM Plex Mono";
+    font-weight:500;
+  }
+  table.heat td.cell{ font-family:"IBM Plex Mono"; color:#0b1520; border-radius:3px; }
+  table.heat td.total{ font-family:"IBM Plex Mono"; font-weight:600; border-left:1px solid var(--border); }
+  table.heat td.rank{ color:var(--ink-3); }
+  table.heat tr.totalrow td{ border-top:1.5px solid var(--ink); font-weight:600; }
+  table.heat tr.totalrow td:first-child{ font-family:"Barlow Condensed"; text-transform:uppercase; letter-spacing:0.04em; font-size:11.5px;}
+
+  /* ---------- generic data table ---------- */
+  .tbl-scroll{ overflow-x:auto; }
+  table.data{ border-collapse:collapse; width:100%; min-width:760px; font-size:12.8px; }
+  table.data th{
+    text-align:left; font-family:"Barlow Condensed"; font-weight:600; letter-spacing:0.04em;
+    text-transform:uppercase; color:var(--ink-3); font-size:11px; padding:0 10px 8px; border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  table.data td{ padding:8px 10px; border-bottom:1px solid var(--border-2); white-space:nowrap; }
+  table.data tbody tr:hover{ background:var(--surface-2); }
+  table.data td.num, table.data th.num{ text-align:right; font-family:"IBM Plex Mono"; }
+  .truckid{ font-family:"IBM Plex Mono"; font-weight:500; background:var(--surface-3); padding:2px 6px; border-radius:5px; }
+  .routecode{ font-family:"IBM Plex Mono"; font-size:12px; color:var(--ink-2); }
+  .zero{ color:var(--ink-3); }
+
+  .pill{ display:inline-flex; align-items:center; gap:5px; padding:2px 8px; border-radius:100px; font-size:11.5px; font-weight:500; background:var(--surface-3); color:var(--ink-2); }
+  .pill.gardenia{ background:var(--brand-soft); color:var(--brand); }
+  .pill.mondial{ background:var(--accent-soft); color:var(--accent-ink); }
+  .pill.miles{ background:color-mix(in srgb, var(--series-aqua) 22%, transparent); color:var(--series-aqua); }
+
+  /* ---------- flags list ---------- */
+  .flags{ display:flex; flex-direction:column; gap:0; }
+  .flag{ display:flex; gap:10px; padding:11px 2px; border-top:1px solid var(--border-2); }
+  .flag:first-child{ border-top:none; padding-top:4px; }
+  .flag .stripe{ width:3px; border-radius:2px; flex:none; align-self:stretch; }
+  .flag .stripe.crit{ background:var(--status-critical); }
+  .flag .stripe.warn{ background:var(--status-warning); }
+  .flag .stripe.info{ background:var(--brand); }
+  .flag .body{ min-width:0; }
+  .flag .title{ display:block; font-weight:600; font-size:13px; }
+  .flag .desc{ display:block; font-size:12.5px; color:var(--ink-2); margin-top:2px; }
+  .flags .empty{ color:var(--ink-3); font-size:12.5px; padding:4px 2px; }
+
+  footer{ text-align:center; color:var(--ink-3); font-size:12px; padding-top:6px; }
+
+  /* ---------- loading / error state ---------- */
+  .skel{ background:linear-gradient(90deg,var(--surface-3) 25%,var(--surface-2) 37%,var(--surface-3) 63%); background-size:400% 100%; animation:skel 1.4s ease infinite; border-radius:6px; }
+  @keyframes skel{ 0%{background-position:100% 0} 100%{background-position:0 0} }
+  .kpi .skel{ height:26px; width:70%; }
+  .card .skel-block{ height:160px; border-radius:8px; }
+  .banner{
+    display:none; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:10px;
+    background:color-mix(in srgb, var(--status-critical) 12%, var(--surface)); border:1px solid color-mix(in srgb, var(--status-critical) 40%, var(--border));
+    color:var(--ink); font-size:13px;
+  }
+  .banner.show{ display:flex; }
+  .banner b{ font-weight:600; }
+  .banner code{ font-family:"IBM Plex Mono"; font-size:12px; background:var(--surface-3); padding:1px 5px; border-radius:4px; }
+  .banner .dot{ width:8px; height:8px; margin-top:5px; border-radius:50%; background:var(--status-critical); flex:none; }
+
+  @media (max-width:920px){
+    .grid{ grid-template-columns:1fr; }
+    .kpis{ grid-template-columns:repeat(2,1fr); }
+  }
+  @media (max-width:520px){
+    .kpis{ grid-template-columns:1fr; }
+    body{ padding-inline:14px; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+
+  <div class="banner" id="errorBanner">
+    <span class="dot"></span>
+    <span id="errorBannerText"></span>
+  </div>
+
+  <header class="topbar">
+    <div>
+      <h1>JMD Daily Trip</h1>
+      <div class="sub">Daily trip &amp; cash-out monitor — Gardenia · Mondial · Miles routes</div>
+    </div>
+    <div class="chipline" id="chipline">
+      <span class="chip"><span class="dot"></span><span class="skel" style="width:110px;height:11px;display:inline-block;"></span></span>
+      <span class="chip"><span class="skel" style="width:150px;height:11px;display:inline-block;"></span></span>
+      <span class="chip">Source: TRIPS sheet, 2026 Daily Trip Monitoring</span>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpiSection">
+    <div class="kpi">
+      <div class="lbl" id="kpi1Lbl">Trips, YTD</div>
+      <div class="val num"><span class="skel"></span></div>
+      <div class="sub" id="kpi1Sub">&nbsp;</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">Cash-out, YTD</div>
+      <div class="val num"><span class="skel"></span></div>
+      <div class="sub">fuel, tolls, parking &amp; crew pitik</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl">Fleet-card fuel loaded, YTD</div>
+      <div class="val num"><span class="skel"></span></div>
+      <div class="sub">topped up separately from cash-out</div>
+    </div>
+    <div class="kpi">
+      <div class="lbl" id="kpi4Lbl">On the road</div>
+      <div class="val num"><span class="skel"></span></div>
+      <div class="sub" id="kpi4Sub">&nbsp;</div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="col">
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Monthly cash-out</h2>
+          <span class="period" id="periodTrend">&nbsp;</span>
+        </div>
+        <div class="card-note">Fuel, tolls, parking and crew pitik logged per trip. Outlier months are called out under Flags.</div>
+        <div id="chartOpxTrend"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card" id="cardAdminOpx" hidden>
+        <div class="card-head">
+          <h2>Monthly admin expenses</h2>
+          <span class="period" id="periodAdminOpx">&nbsp;</span>
+        </div>
+        <div class="card-note">Office &amp; yard overhead from the MONTHLY OPX ledger — salaries, repairs, supplies, contingency fund. Not truck cash-out; tracked separately.</div>
+        <div id="chartAdminOpx"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Trips per truck, by month</h2>
+          <span class="period" id="periodHeatmap">&nbsp;</span>
+        </div>
+        <div class="card-note">Darker cells = more trips that month. Hover a cell for the exact count.</div>
+        <div id="heatmapTrips"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Recent trips</h2>
+          <span class="period" id="periodRecent">&nbsp;</span>
+        </div>
+        <div class="card-note">The latest rows dispatched in the TRIPS sheet. Incidentals are logged a day or two behind dispatch, so the newest rows may still show pending.</div>
+        <div id="recentTrips"><div class="skel skel-block"></div></div>
+      </div>
+
+    </div>
+
+    <div class="col">
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Cash-out by category</h2>
+          <span class="period">YTD</span>
+        </div>
+        <div class="card-note" id="noteCategory">Fuel cashed is consistently the largest line — see Flags for notable shifts in the mix.</div>
+        <div id="chartOpxCategory"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Trip share by shipper</h2>
+          <span class="period">YTD</span>
+        </div>
+        <div id="shipperShare"><div class="skel skel-block" style="height:80px;"></div></div>
+        <div class="card-note" id="noteShipper" style="margin-top:12px; margin-bottom:0;">&nbsp;</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Fuel cashed by month</h2>
+          <span class="period" id="periodFuel">&nbsp;</span>
+        </div>
+        <div class="card-note">Direct cash fuel purchases, separate from fleet-card top-ups. Flagged months are highlighted.</div>
+        <div id="chartBudget"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Flags &amp; notes</h2>
+        </div>
+        <div class="flags" id="flagsList"><div class="skel" style="height:60px;"></div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer id="pageFooter">JMD Daily Trip · figures pulled from the 2026 Daily Trip Monitoring sheet · amounts in PHP</footer>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function(){
+  "use strict";
+  var tip = document.getElementById('tooltip');
+  function showTip(x,y,html){ tip.innerHTML = html; tip.style.left = x+'px'; tip.style.top = (y-10)+'px'; tip.style.opacity = 1; }
+  function hideTip(){ tip.style.opacity = 0; }
+  function css(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function peso(n, dec){
+    dec = dec===undefined ? 0 : dec;
+    var s = Math.abs(n).toLocaleString('en-US', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+    return (n<0?'−':'') + '₱' + s;
+  }
+  function svgEl(tag, attrs){
+    var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  var MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtLongDate(iso){
+    // "2026-09-11" -> "Sep 11, 2026"
+    if(!iso) return '';
+    var p = iso.split('-');
+    var mm = +p[1], dd = +p[2];
+    return MONTH_NAMES[mm-1]+' '+dd+', '+p[0];
+  }
+  function fmtShortFromMD(md){
+    // "09-11" -> {mm,dd,label:'Sep 11'}
+    var mm = +md.slice(0,2), dd = +md.slice(3,5);
+    return { mm:mm, dd:dd, label: MONTH_NAMES[mm-1]+' '+dd };
+  }
+  function niceMax(v){
+    if(v<=0) return 10;
+    var exp = Math.floor(Math.log10(v));
+    var base = Math.pow(10, exp);
+    var f = v/base;
+    var niceF = f<=1?1 : f<=2?2 : f<=5?5 : 10;
+    return niceF*base;
+  }
+  function axisLabel(t){
+    if(t===0) return '₱0';
+    if(t>=1000) return '₱'+Math.round(t/1000)+'k';
+    return '₱'+t;
+  }
+
+  /* ================= header + KPIs + card periods ================= */
+  function renderHeaderAndKpis(data){
+    var k = data.kpis, months = data.months, range = data.range;
+    var year = range.from ? range.from.slice(0,4) : '';
+
+    document.getElementById('chipline').innerHTML =
+      '<span class="chip"><span class="dot live"></span>'+k.rosterSize+' trucks on roster</span>'+
+      '<span class="chip">Live through <b>'+fmtLongDate(range.to)+'</b></span>'+
+      '<span class="chip">Source: TRIPS sheet, 2026 Daily Trip Monitoring</span>';
+
+    document.getElementById('kpiSection').innerHTML =
+      '<div class="kpi">'+
+        '<div class="lbl">Trips, '+(months[0]||'')+' '+(range.from?(+range.from.slice(8,10)):'')+'–'+(months[months.length-1]||'')+' '+(range.to?(+range.to.slice(8,10)):'')+'</div>'+
+        '<div class="val num">'+k.trips.toLocaleString()+'</div>'+
+        '<div class="sub">'+k.rosterSize+' trucks on roster</div>'+
+      '</div>'+
+      '<div class="kpi">'+
+        '<div class="lbl">Cash-out, YTD</div>'+
+        '<div class="val num">'+peso(k.cashOutTotal)+'</div>'+
+        '<div class="sub">fuel, tolls, parking &amp; crew pitik</div>'+
+      '</div>'+
+      '<div class="kpi">'+
+        '<div class="lbl">Fleet-card fuel loaded, YTD</div>'+
+        '<div class="val num">'+peso(k.fuelLoadedTotal)+'</div>'+
+        '<div class="sub">topped up separately from cash-out</div>'+
+      '</div>'+
+      '<div class="kpi">'+
+        '<div class="lbl">On the road, '+fmtShortFromMD(k.latestDateLabel).label+'</div>'+
+        '<div class="val num">'+k.activeToday+' <span style="font-size:16px;color:var(--ink-3)">/ '+k.rosterSize+' trucks</span></div>'+
+        '<div class="sub">'+k.activePrevCount+' active the day before</div>'+
+      '</div>';
+
+    var periodStr = (months.length ? months[0].toUpperCase()+'–'+months[months.length-1].toUpperCase()+' '+year : '');
+    document.getElementById('periodTrend').textContent = periodStr;
+    document.getElementById('periodHeatmap').textContent = periodStr;
+    document.getElementById('periodFuel').textContent = periodStr;
+
+    document.getElementById('pageFooter').textContent =
+      'JMD Daily Trip · figures pulled from the 2026 Daily Trip Monitoring sheet · amounts in PHP · refreshed '+ new Date(data.generatedAt).toLocaleString();
+  }
+
+  /* ================= Monthly cash-out trend (line + area) ================= */
+  function renderTrend(data){
+    var labels = data.months, values = data.cashOutByMonth;
+    var W=600,H=230, padL=54, padR=14, padT=16, padB=30;
+    var innerW = W-padL-padR, innerH = H-padT-padB;
+    var maxV = niceMax(Math.max.apply(null, values.concat([1])));
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H, class:'chart-svg', role:'img', 'aria-label':'Monthly cash-out trend'});
+
+    var ticks=[0, maxV/3, maxV*2/3, maxV];
+    ticks.forEach(function(t){
+      var y = padT + innerH - (t/maxV)*innerH;
+      svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:y,y2:y,class:'grid-line'}));
+      var lbl = svgEl('text',{x:padL-8,y:y+4,class:'tick-label','text-anchor':'end'});
+      lbl.textContent = axisLabel(Math.round(t));
+      svg.appendChild(lbl);
+    });
+
+    function xAt(i){ return values.length>1 ? padL + (i/(values.length-1))*innerW : padL+innerW/2; }
+    function yAt(v){ return padT + innerH - (v/maxV)*innerH; }
+
+    var pts = values.map(function(v,i){ return [xAt(i), yAt(v)]; });
+    var areaD = 'M'+pts[0][0]+','+(padT+innerH)+' ' + pts.map(function(p){return 'L'+p[0]+','+p[1];}).join(' ') + ' L'+pts[pts.length-1][0]+','+(padT+innerH)+' Z';
+    var lineD = 'M'+pts.map(function(p){return p[0]+','+p[1];}).join(' L');
+
+    var gradId = 'opxGrad';
+    var defs = svgEl('defs',{});
+    var grad = svgEl('linearGradient',{id:gradId,x1:'0',y1:'0',x2:'0',y2:'1'});
+    grad.appendChild(svgEl('stop',{offset:'0%','stop-color':css('--series-blue'),'stop-opacity':'0.28'}));
+    grad.appendChild(svgEl('stop',{offset:'100%','stop-color':css('--series-blue'),'stop-opacity':'0.02'}));
+    defs.appendChild(grad); svg.appendChild(defs);
+
+    svg.appendChild(svgEl('path',{d:areaD, fill:'url(#'+gradId+')', stroke:'none'}));
+    svg.appendChild(svgEl('path',{d:lineD, fill:'none', stroke:css('--series-blue'), 'stroke-width':2.25, 'stroke-linejoin':'round','stroke-linecap':'round'}));
+
+    labels.forEach(function(lb,i){
+      var t = svgEl('text',{x:xAt(i),y:H-8,class:'tick-label','text-anchor':'middle'});
+      t.textContent = lb; svg.appendChild(t);
+    });
+
+    var lastIdx = pts.length-1;
+    pts.forEach(function(p,i){
+      var isLast = i===lastIdx;
+      var c = svgEl('circle',{cx:p[0],cy:p[1],r: isLast?4.5:3, fill: css('--surface'), stroke:css('--series-blue'), 'stroke-width':2});
+      svg.appendChild(c);
+      var hit = svgEl('circle',{cx:p[0],cy:p[1],r:10, fill:'transparent'});
+      hit.addEventListener('mousemove', function(e){
+        showTip(e.clientX, e.clientY, labels[i]+' '+(data.range.from||'').slice(0,4)+'<br><b>'+peso(values[i])+'</b> cash-out');
+      });
+      hit.addEventListener('mouseleave', hideTip);
+      svg.appendChild(hit);
+    });
+
+    var el = document.getElementById('chartOpxTrend');
+    el.innerHTML=''; el.appendChild(svg);
+  }
+
+  /* ================= Cash-out by category (sorted horizontal bars) ================= */
+  function renderCategory(data){
+    var cats = data.categoryChart;
+    var total = data.kpis.cashOutTotal || cats.reduce(function(s,c){return s+c.value;},0);
+    var W=600, rowH=28, padL=118, padR=54, padT=4, padB=4;
+    var H = padT+padB+rowH*cats.length;
+    var innerW = W-padL-padR;
+    var maxV = cats.length ? cats[0].value : 1;
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H, class:'chart-svg', role:'img','aria-label':'Cash-out by category, year to date'});
+
+    cats.forEach(function(d,i){
+      var y = padT + i*rowH;
+      var barW = maxV ? (d.value/maxV)*innerW : 0;
+      var lbl = svgEl('text',{x:padL-8,y:y+rowH*0.62,class:'cat-label','text-anchor':'end'});
+      lbl.textContent = d.label; svg.appendChild(lbl);
+
+      svg.appendChild(svgEl('rect',{x:padL,y:y+4,width:innerW,height:rowH-10,rx:3,fill:css('--surface-3')}));
+      var bar = svgEl('rect',{x:padL,y:y+4,width:Math.max(barW,2),height:rowH-10,rx:3,fill:css('--seq-400')});
+      svg.appendChild(bar);
+
+      var val = svgEl('text',{x:padL+Math.max(barW,2)+8,y:y+rowH*0.62,class:'value-label'});
+      val.textContent = peso(d.value); svg.appendChild(val);
+
+      var hit = svgEl('rect',{x:0,y:y,width:W,height:rowH,fill:'transparent'});
+      hit.addEventListener('mousemove', function(e){
+        var pct = total ? (d.value/total*100).toFixed(1) : '0.0';
+        showTip(e.clientX,e.clientY, d.label+'<br><b>'+peso(d.value)+'</b> · '+pct+'% of YTD cash-out');
+      });
+      hit.addEventListener('mouseleave', hideTip);
+      svg.appendChild(hit);
+    });
+    var el = document.getElementById('chartOpxCategory');
+    el.innerHTML=''; el.appendChild(svg);
+
+    // dynamic note: how pitik compares to the smaller categories combined
+    var pitik = cats.find(function(c){ return /pitik/i.test(c.label); });
+    var smallSum = cats.filter(function(c){ return !/pitik|fuel/i.test(c.label); }).reduce(function(s,c){return s+c.value;},0);
+    if(pitik && smallSum){
+      var cmp = pitik.value > smallSum ? 'more than' : 'less than';
+      document.getElementById('noteCategory').textContent =
+        'Crew pitik totals '+peso(pitik.value)+' YTD — '+cmp+' parking, toll and misc combined ('+peso(smallSum)+').';
+    }
+  }
+
+  /* ================= Trips per truck heatmap ================= */
+  function renderHeatmap(data){
+    var months = data.months;
+    var trucks = data.heatmap.trucks;
+    var monthTotals = months.map(function(_,mi){ return trucks.reduce(function(s,t){ return s+(t.counts[mi]||0); },0); });
+    var grand = monthTotals.reduce(function(a,b){return a+b;},0);
+    var maxCell = trucks.reduce(function(m,t){ return Math.max(m, Math.max.apply(null, t.counts.concat([0]))); }, 1);
+
+    function shade(v){
+      if(v===0) return 'transparent';
+      var t = Math.pow(v/maxCell, 0.72);
+      var stops = [[205,226,251],[134,182,239],[57,135,229],[37,106,191],[16,66,129]];
+      var pos = t*(stops.length-1);
+      var i0 = Math.max(0,Math.min(stops.length-2, Math.floor(pos)));
+      var f = pos-i0;
+      var c0=stops[i0], c1=stops[i0+1];
+      var r=Math.round(c0[0]+(c1[0]-c0[0])*f), g=Math.round(c0[1]+(c1[1]-c0[1])*f), b=Math.round(c0[2]+(c1[2]-c0[2])*f);
+      return 'rgb('+r+','+g+','+b+')';
+    }
+    function textColor(v){ return v/maxCell > 0.42 ? '#ffffff' : '#0b1520'; }
+
+    var html = '<div class="heat-scroll"><table class="heat"><thead><tr><th>Truck</th>';
+    months.forEach(function(m){ html += '<th>'+m+'</th>'; });
+    html += '<th>Total</th><th>Rank</th></tr></thead><tbody>';
+    trucks.forEach(function(t){
+      html += '<tr><td>'+t.truck+'</td>';
+      t.counts.forEach(function(v,mi){
+        html += '<td class="cell" data-truck="'+t.truck+'" data-month="'+months[mi]+'" data-v="'+v+'" style="background:'+shade(v)+'; color:'+textColor(v)+'">'+(v||'')+'</td>';
+      });
+      html += '<td class="total">'+t.total+'</td><td class="rank">#'+t.rank+'</td></tr>';
+    });
+    html += '<tr class="totalrow"><td>Total</td>';
+    monthTotals.forEach(function(t){ html += '<td class="cell">'+t+'</td>'; });
+    html += '<td class="total">'+grand+'</td><td></td></tr>';
+    html += '</tbody></table></div>';
+    var el = document.getElementById('heatmapTrips');
+    el.innerHTML = html;
+
+    el.querySelectorAll('td.cell[data-truck]').forEach(function(td){
+      td.addEventListener('mousemove', function(e){
+        showTip(e.clientX, e.clientY, '<b>'+td.dataset.truck+'</b> · '+td.dataset.month+'<br>'+td.dataset.v+' trips');
+      });
+      td.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  /* ================= Recent trips table ================= */
+  function renderRecent(data){
+    var rows = data.recent;
+    var year = (data.range.to||'').slice(0,4);
+    var html = '<div class="tbl-scroll"><table class="data"><thead><tr>'+
+      '<th>Date</th><th>Truck</th><th>Shipper</th><th>Route</th><th>Driver</th><th>Helper</th><th class="num">Incidentals</th>'+
+      '</tr></thead><tbody>';
+    rows.forEach(function(r){
+      var pillClass = r.client ? r.client.toLowerCase() : '';
+      var expenseCell = r.expense ? '<td class="num">'+peso(r.expense)+'</td>' : '<td class="num zero">pending</td>';
+      html += '<tr><td class="num">'+r.date+'</td>'+
+        '<td><span class="truckid">'+r.truck+'</span></td>'+
+        '<td><span class="pill '+pillClass+'">'+(r.client||'—')+'</span></td>'+
+        '<td class="routecode">'+(r.route||'—')+'</td>'+
+        '<td>'+(r.driver||'—')+'</td>'+
+        '<td>'+(r.helper||'—')+'</td>'+
+        expenseCell+
+        '</tr>';
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('recentTrips').innerHTML = html;
+
+    if(rows.length){
+      var days = Array.from(new Set(rows.map(function(r){return r.date;}))).sort();
+      var first = fmtShortFromMD(days[0]), last = fmtShortFromMD(days[days.length-1]);
+      var label = first.mm===last.mm
+        ? MONTH_NAMES[first.mm-1].toUpperCase()+' '+first.dd+'–'+last.dd+', '+year
+        : MONTH_NAMES[first.mm-1].toUpperCase()+' '+first.dd+'–'+MONTH_NAMES[last.mm-1].toUpperCase()+' '+last.dd+', '+year;
+      document.getElementById('periodRecent').textContent = label;
+    }
+  }
+
+  /* ================= Shipper share (single stacked bar) ================= */
+  function renderShipper(data){
+    var palette = ['--series-blue','--series-orange','--series-aqua','--ink-3'];
+    var entries = data.shipperShare;
+    var total = entries.reduce(function(s,d){return s+d.value;},0) || 1;
+    var W=600,H=64, y=14, barH=30;
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H, class:'chart-svg', role:'img','aria-label':'Trip share by shipper, year to date'});
+    var x = 0;
+    entries.forEach(function(d,i){
+      var colorVar = palette[Math.min(i,palette.length-1)];
+      var w = (d.value/total)*W;
+      var rect = svgEl('rect',{x:x,y:y,width:Math.max(w-(i<entries.length-1?2:0),0),height:barH,rx:4,fill:css(colorVar)});
+      svg.appendChild(rect);
+      if(w>46){
+        var t = svgEl('text',{x:x+w/2,y:y+barH/2+4,'text-anchor':'middle',fill:'#fff',class:'value-label',style:'font-size:12px'});
+        t.textContent = Math.round(d.value/total*100)+'%';
+        svg.appendChild(t);
+      }
+      var hit = svgEl('rect',{x:x,y:y,width:w,height:barH,fill:'transparent'});
+      hit.addEventListener('mousemove', function(e){
+        showTip(e.clientX,e.clientY,'<b>'+d.label+'</b><br>'+d.value.toLocaleString()+' trips · '+(d.value/total*100).toFixed(1)+'%');
+      });
+      hit.addEventListener('mouseleave', hideTip);
+      svg.appendChild(hit);
+      x += w;
+    });
+    var el = document.getElementById('shipperShare');
+    el.innerHTML=''; el.appendChild(svg);
+
+    var leg = document.createElement('div'); leg.className='legend';
+    entries.forEach(function(d,i){
+      var colorVar = palette[Math.min(i,palette.length-1)];
+      var it = document.createElement('span'); it.className='legend-item';
+      it.innerHTML = '<span class="legend-swatch" style="background:'+css(colorVar)+'"></span>'+d.label+' <span class="num" style="color:var(--ink-3)">'+d.value+'</span>';
+      leg.appendChild(it);
+    });
+    el.appendChild(leg);
+
+    if(entries.length>=2){
+      var gap = Math.abs(entries[0].value-entries[1].value);
+      document.getElementById('noteShipper').innerHTML =
+        '<b class="num" style="color:var(--ink)">'+entries[0].label+'</b> leads <b>'+entries[1].label+'</b> by '+
+        '<b class="num" style="color:var(--ink)">'+gap+'</b> trip'+(gap===1?'':'s')+' YTD.';
+    }
+  }
+
+  /* ================= Fuel cashed by month ================= */
+  function renderFuel(data){
+    var labels = data.months, values = data.fuelCashedByMonth;
+    var W=600,H=220,padL=50,padR=10,padT=12,padB=30;
+    var innerW=W-padL-padR, innerH=H-padT-padB;
+    var maxV = niceMax(Math.max.apply(null, values.concat([1])));
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H,class:'chart-svg',role:'img','aria-label':'Fuel cashed by month'});
+
+    // which month (if any) was flagged as a fuel-cash spike
+    var flaggedMonth = null;
+    (data.flags||[]).forEach(function(f){
+      var m = /Fuel-cash spike in (\w+)/.exec(f.title||'');
+      if(m) flaggedMonth = m[1];
+    });
+
+    [0,maxV/3,maxV*2/3,maxV].forEach(function(t){
+      var y = padT+innerH-(t/maxV)*innerH;
+      svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:y,y2:y,class:'grid-line'}));
+      var lbl=svgEl('text',{x:padL-8,y:y+4,class:'tick-label','text-anchor':'end'});
+      lbl.textContent=axisLabel(Math.round(t)); svg.appendChild(lbl);
+    });
+
+    var colW = innerW/labels.length;
+    var barW = colW*0.52;
+    labels.forEach(function(lb,i){
+      var v = values[i];
+      var x = padL + i*colW + (colW-barW)/2;
+      var h = (v/maxV)*innerH;
+      var y = padT+innerH-h;
+      var isFlagged = lb===flaggedMonth;
+      var rect = svgEl('rect',{x:x,y:y,width:barW,height:Math.max(h,1.5),rx:2,fill: isFlagged? css('--status-warning') : css('--seq-400')});
+      svg.appendChild(rect);
+      var lab = svgEl('text',{x:x+barW/2,y:H-padB+18,class:'tick-label','text-anchor':'middle'});
+      lab.textContent = lb; svg.appendChild(lab);
+
+      var hit = svgEl('rect',{x:padL+i*colW,y:padT,width:colW,height:innerH,fill:'transparent'});
+      hit.addEventListener('mousemove', function(e){
+        showTip(e.clientX,e.clientY, lb+'<br><b>'+peso(v)+'</b> fuel cashed'+(isFlagged?' <span style="opacity:.7">(flagged)</span>':''));
+      });
+      hit.addEventListener('mouseleave', hideTip);
+      svg.appendChild(hit);
+    });
+    var el = document.getElementById('chartBudget');
+    el.innerHTML=''; el.appendChild(svg);
+
+    var leg = document.createElement('div'); leg.className='legend';
+    leg.innerHTML = '<span class="legend-item"><span class="legend-swatch" style="background:'+css('--seq-400')+'"></span>Fuel cashed</span>'+
+                     '<span class="legend-item"><span class="legend-swatch" style="background:'+css('--status-warning')+'"></span>Flagged month</span>';
+    el.appendChild(leg);
+  }
+
+  /* ================= Monthly admin expenses (MONTHLY OPX tab) ================= */
+  function renderAdminOpx(data){
+    var opx = data.opx;
+    var card = document.getElementById('cardAdminOpx');
+    if(!opx || !opx.months || !opx.months.length){
+      card.hidden = true;
+      return;
+    }
+    card.hidden = false;
+
+    var labels = opx.months, values = opx.totals;
+    var W=600,H=220,padL=54,padR=10,padT=12,padB=30;
+    var innerW=W-padL-padR, innerH=H-padT-padB;
+    var maxV = niceMax(Math.max.apply(null, values.concat([1])));
+    var svg = svgEl('svg',{viewBox:'0 0 '+W+' '+H,class:'chart-svg',role:'img','aria-label':'Monthly admin expenses'});
+
+    [0,maxV/3,maxV*2/3,maxV].forEach(function(t){
+      var y = padT+innerH-(t/maxV)*innerH;
+      svg.appendChild(svgEl('line',{x1:padL,x2:W-padR,y1:y,y2:y,class:'grid-line'}));
+      var lbl=svgEl('text',{x:padL-8,y:y+4,class:'tick-label','text-anchor':'end'});
+      lbl.textContent=axisLabel(Math.round(t)); svg.appendChild(lbl);
+    });
+
+    var colW = innerW/labels.length;
+    var barW = colW*0.52;
+    labels.forEach(function(lb,i){
+      var v = values[i];
+      var x = padL + i*colW + (colW-barW)/2;
+      var h = (v/maxV)*innerH;
+      var y = padT+innerH-h;
+      var rect = svgEl('rect',{x:x,y:y,width:barW,height:Math.max(h,1.5),rx:2,fill:css('--series-orange')});
+      svg.appendChild(rect);
+      var lab = svgEl('text',{x:x+barW/2,y:H-padB+18,class:'tick-label','text-anchor':'middle'});
+      lab.textContent = lb; svg.appendChild(lab);
+
+      var hit = svgEl('rect',{x:padL+i*colW,y:padT,width:colW,height:innerH,fill:'transparent'});
+      hit.addEventListener('mousemove', function(e){
+        showTip(e.clientX,e.clientY, lb+'<br><b>'+peso(v)+'</b> admin expenses');
+      });
+      hit.addEventListener('mouseleave', hideTip);
+      svg.appendChild(hit);
+    });
+    var el = document.getElementById('chartAdminOpx');
+    el.innerHTML=''; el.appendChild(svg);
+
+    if(opx.categoryChart && opx.categoryChart.length){
+      var leg = document.createElement('div'); leg.className='legend';
+      var top = opx.categoryChart[0];
+      leg.innerHTML = '<span class="legend-item"><span class="legend-swatch" style="background:'+css('--series-orange')+'"></span>Admin/yard expense</span>'+
+        '<span class="legend-item">Biggest line: <b class="num" style="color:var(--ink)">'+top.label+'</b> ('+peso(top.value)+' YTD)</span>';
+      el.appendChild(leg);
+    }
+
+    var period = labels.length ? labels[0].toUpperCase()+'–'+labels[labels.length-1].toUpperCase()+' '+((data.range.from||'').slice(0,4)) : '';
+    document.getElementById('periodAdminOpx').textContent = period;
+  }
+
+  /* ================= Flags & notes ================= */
+  function renderFlags(data){
+    var flags = data.flags || [];
+    var el = document.getElementById('flagsList');
+    el.innerHTML = '';
+    if(!flags.length){
+      el.innerHTML = '<div class="empty">No flags — nothing stands out this period.</div>';
+      return;
+    }
+    flags.forEach(function(f){
+      var div = document.createElement('div'); div.className='flag';
+      div.innerHTML = '<span class="stripe '+f.level+'"></span><span class="body"><span class="title">'+f.title+'</span><span class="desc">'+f.desc+'</span></span>';
+      el.appendChild(div);
+    });
+  }
+
+  function render(data){
+    renderHeaderAndKpis(data);
+    renderTrend(data);
+    renderAdminOpx(data);
+    renderCategory(data);
+    renderHeatmap(data);
+    renderRecent(data);
+    renderShipper(data);
+    renderFuel(data);
+    renderFlags(data);
+  }
+
+  function showError(message){
+    var banner = document.getElementById('errorBanner');
+    document.getElementById('errorBannerText').innerHTML =
+      '<b>Live data isn\'t available right now.</b> '+message+
+      ' If you\'re the site owner, check that <code>GOOGLE_SERVICE_ACCOUNT_EMAIL</code> and <code>GOOGLE_PRIVATE_KEY</code> are set in the Vercel project\'s environment variables, and that the sheet is shared with the service account.';
+    banner.classList.add('show');
+  }
+
+  function boot(){
+    fetch('/api/trips', {cache:'no-store'})
+      .then(function(res){
+        if(!res.ok){
+          return res.json().catch(function(){ return {}; }).then(function(body){
+            throw new Error(body.error || ('Request failed (HTTP '+res.status+').'));
+          });
+        }
+        return res.json();
+      })
+      .then(function(data){ render(data); })
+      .catch(function(err){ showError(err.message || String(err)); });
+  }
+
+  document.addEventListener('DOMContentLoaded', boot);
+})();
+</script>
+
+</body>
+</html>

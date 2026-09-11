@@ -154,11 +154,13 @@
     position:sticky; left:0; background:var(--surface); text-align:left; font-family:"IBM Plex Mono";
     font-weight:500;
   }
-  table.heat td.cell{ font-family:"IBM Plex Mono"; color:#0b1520; border-radius:3px; }
+  table.heat td.cell{ font-family:"IBM Plex Mono"; color:#0b1520; border-radius:3px; position:relative; }
+  table.heat td.cell .daynum{ position:absolute; top:2px; left:4px; font-size:8.5px; font-weight:500; opacity:.55; line-height:1; }
   table.heat td.total{ font-family:"IBM Plex Mono"; font-weight:600; border-left:1px solid var(--border); }
   table.heat td.rank{ color:var(--ink-3); }
   table.heat tr.totalrow td{ border-top:1.5px solid var(--ink); font-weight:600; }
   table.heat tr.totalrow td:first-child{ font-family:"Barlow Condensed"; text-transform:uppercase; letter-spacing:0.04em; font-size:11.5px;}
+  table.heat tr.totalrow td.cell{ color:var(--ink); }
 
   /* ---------- generic data table ---------- */
   .tbl-scroll{ overflow-x:auto; }
@@ -638,7 +640,8 @@
       html += '<tr><td>Week '+(wi+1)+'</td>';
       w.forEach(function(d){
         if(!d){ html += '<td class="cell"></td>'; return; }
-        html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'">'+(d.count||'')+'</td>';
+        var dayNum = parseInt(d.date.slice(-2),10);
+        html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'"><span class="daynum">'+dayNum+'</span>'+(d.count||'')+'</td>';
       });
       html += '<td class="total">'+weekTotals[wi]+'</td></tr>';
     });

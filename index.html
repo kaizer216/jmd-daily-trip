@@ -631,20 +631,19 @@
     var weekTotals = weeks.map(function(w){ return w.reduce(function(s,d){ return s+(d?d.count:0); },0); });
     var grand = weekTotals.reduce(function(a,b){return a+b;},0);
 
-    var html = '<div class="heat-scroll"><table class="heat"><thead><tr><th>Day</th>';
-    weeks.forEach(function(_,wi){ html += '<th>Week '+(wi+1)+'</th>'; });
+    var html = '<div class="heat-scroll"><table class="heat"><thead><tr><th>Week</th>';
+    WEEKDAY_NAMES.forEach(function(wd){ html += '<th>'+wd+'</th>'; });
     html += '<th>Total</th></tr></thead><tbody>';
-    WEEKDAY_NAMES.forEach(function(wd,ri){
-      html += '<tr><td>'+wd+'</td>';
-      weeks.forEach(function(w){
-        var d = w[ri];
+    weeks.forEach(function(w,wi){
+      html += '<tr><td>Week '+(wi+1)+'</td>';
+      w.forEach(function(d){
         if(!d){ html += '<td class="cell"></td>'; return; }
         html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'">'+(d.count||'')+'</td>';
       });
-      html += '<td class="total">'+weekdayTotals[ri]+'</td></tr>';
+      html += '<td class="total">'+weekTotals[wi]+'</td></tr>';
     });
     html += '<tr class="totalrow"><td>Total</td>';
-    weekTotals.forEach(function(t){ html += '<td class="cell">'+t+'</td>'; });
+    weekdayTotals.forEach(function(t){ html += '<td class="cell">'+t+'</td>'; });
     html += '<td class="total">'+grand+'</td></tr>';
     html += '</tbody></table></div>';
 

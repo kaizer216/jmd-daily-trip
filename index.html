@@ -133,6 +133,14 @@
   :root[data-theme="dark"] .tooltip{ background:#f1f2f0; color:#14171a; }
   .tooltip b{ font-family:"IBM Plex Mono"; }
 
+  /* ---------- month select ---------- */
+  .month-select{
+    font-family:"IBM Plex Mono", monospace; font-size:12.5px; color:var(--ink);
+    background:var(--surface-2); border:1px solid var(--border); border-radius:7px;
+    padding:5px 9px; cursor:pointer;
+  }
+  .month-select:focus{ outline:2px solid var(--brand); outline-offset:1px; }
+
   /* ---------- heatmap table ---------- */
   .heat-scroll{ overflow-x:auto; }
   table.heat{ border-collapse:collapse; width:100%; min-width:640px; font-size:12.5px; }
@@ -285,6 +293,15 @@
         </div>
         <div class="card-note">Darker cells = more trips that month. Hover a cell for the exact count.</div>
         <div id="heatmapTrips"><div class="skel skel-block"></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Trips per day, by week</h2>
+          <select class="month-select" id="calMonthSelect"></select>
+        </div>
+        <div class="card-note">Darker cells = more trips that day. Hover a cell for the exact count.</div>
+        <div id="calendarGrid"><div class="skel skel-block"></div></div>
       </div>
 
       <div class="card">
@@ -574,6 +591,94 @@
     });
   }
 
+  /* ================= Trips per day, by week (calendar grid) ================= */
+  var WEEKDAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  function buildCalendarWeeks(monthEntry){
+    var days = monthEntry.days;
+    var startWeekday = (new Date(days[0].date+'T00:00:00Z').getUTCDay()+6)%7; // Mon=0..Sun=6
+    var weeks = [];
+    days.forEach(function(d,i){
+      var pos = startWeekday + i;
+      var wi = Math.floor(pos/7), ri = pos%7;
+      if(!weeks[wi]) weeks[wi] = [null,null,null,null,null,null,null];
+      weeks[wi][ri] = d;
+    });
+    return weeks;
+  }
+
+  function renderCalendarGrid(monthEntry){
+    var weeks = buildCalendarWeeks(monthEntry);
+    var maxCell = 1;
+    weeks.forEach(function(w){ w.forEach(function(d){ if(d && d.count>maxCell) maxCell=d.count; }); });
+
+    function shade(v){
+      if(!v) return 'transparent';
+      var t = Math.pow(v/maxCell, 0.72);
+      var stops = [[205,226,251],[134,182,239],[57,135,229],[37,106,191],[16,66,129]];
+      var pos = t*(stops.length-1);
+      var i0 = Math.max(0,Math.min(stops.length-2, Math.floor(pos)));
+      var f = pos-i0;
+      var c0=stops[i0], c1=stops[i0+1];
+      var r=Math.round(c0[0]+(c1[0]-c0[0])*f), g=Math.round(c0[1]+(c1[1]-c0[1])*f), b=Math.round(c0[2]+(c1[2]-c0[2])*f);
+      return 'rgb('+r+','+g+','+b+')';
+    }
+    function textColor(v){ return v/maxCell > 0.42 ? '#ffffff' : '#0b1520'; }
+
+    var weekdayTotals = WEEKDAY_NAMES.map(function(_,ri){
+      return weeks.reduce(function(s,w){ return s+(w[ri]?w[ri].count:0); },0);
+    });
+    var weekTotals = weeks.map(function(w){ return w.reduce(function(s,d){ return s+(d?d.count:0); },0); });
+    var grand = weekTotals.reduce(function(a,b){return a+b;},0);
+
+    var html = '<div class="heat-scroll"><table class="heat"><thead><tr><th>Day</th>';
+    weeks.forEach(function(_,wi){ html += '<th>Week '+(wi+1)+'</th>'; });
+    html += '<th>Total</th></tr></thead><tbody>';
+    WEEKDAY_NAMES.forEach(function(wd,ri){
+      html += '<tr><td>'+wd+'</td>';
+      weeks.forEach(function(w){
+        var d = w[ri];
+        if(!d){ html += '<td class="cell"></td>'; return; }
+        html += '<td class="cell" data-date="'+d.date+'" data-v="'+d.count+'" style="background:'+shade(d.count)+'; color:'+textColor(d.count)+'">'+d.day+'</td>';
+      });
+      html += '<td class="total">'+weekdayTotals[ri]+'</td></tr>';
+    });
+    html += '<tr class="totalrow"><td>Total</td>';
+    weekTotals.forEach(function(t){ html += '<td class="cell">'+t+'</td>'; });
+    html += '<td class="total">'+grand+'</td></tr>';
+    html += '</tbody></table></div>';
+
+    var el = document.getElementById('calendarGrid');
+    el.innerHTML = html;
+    el.querySelectorAll('td.cell[data-date]').forEach(function(td){
+      td.addEventListener('mousemove', function(e){
+        showTip(e.clientX, e.clientY, '<b>'+fmtLongDate(td.dataset.date)+'</b><br>'+td.dataset.v+' trip'+(td.dataset.v==='1'?'':'s'));
+      });
+      td.addEventListener('mouseleave', hideTip);
+    });
+  }
+
+  function renderCalendar(data){
+    var cal = data.dailyCalendar || [];
+    var sel = document.getElementById('calMonthSelect');
+    if(!cal.length){
+      document.getElementById('calendarGrid').innerHTML = '<div class="flags"><div class="empty">No daily data available.</div></div>';
+      sel.innerHTML = ''; sel.hidden = true;
+      return;
+    }
+    sel.hidden = false;
+    sel.innerHTML = cal.map(function(m){ return '<option value="'+m.ym+'">'+m.label+' '+m.ym.slice(0,4)+'</option>'; }).join('');
+    var defaultYm = cal[cal.length-1].ym;
+    sel.value = defaultYm;
+
+    function show(ym){
+      var entry = cal.filter(function(m){ return m.ym===ym; })[0];
+      if(entry) renderCalendarGrid(entry);
+    }
+    sel.onchange = function(){ show(sel.value); };
+    show(defaultYm);
+  }
+
   /* ================= Recent trips table ================= */
   function renderRecent(data){
     var rows = data.recent;
@@ -782,6 +887,7 @@
     renderAdminOpx(data);
     renderCategory(data);
     renderHeatmap(data);
+    renderCalendar(data);
     renderRecent(data);
     renderShipper(data);
     renderFuel(data);

@@ -238,6 +238,23 @@ function compute(rows) {
     }
   });
 
+  // ---- daily trip counts per month, for the day-of-week x week-of-month grid ----
+  const dailyByDate = {};
+  records.forEach(r => { const k = fullDate(r.date); dailyByDate[k] = (dailyByDate[k] || 0) + 1; });
+  function daysInMonth(ym) {
+    const [y, m] = ym.split('-').map(Number);
+    return new Date(Date.UTC(y, m, 0)).getUTCDate();
+  }
+  const dailyCalendar = months.map(ym => {
+    const dim = daysInMonth(ym);
+    const days = [];
+    for (let d = 1; d <= dim; d++) {
+      const dateStr = ym + '-' + String(d).padStart(2, '0');
+      days.push({ day: d, date: dateStr, count: dailyByDate[dateStr] || 0 });
+    }
+    return { ym, label: monthLabel(ym), days };
+  });
+
   return {
     generatedAt: new Date().toISOString(),
     range: { from: fullDate(minDate), to: fullDate(maxDate) },
@@ -255,6 +272,7 @@ function compute(rows) {
     fuelCashedByMonth,
     categoryChart,
     heatmap: { trucks: truckTotals, monthLabels },
+    dailyCalendar,
     shipperShare,
     recent,
     flags: flags.slice(0, 6)
